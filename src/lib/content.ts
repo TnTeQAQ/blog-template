@@ -13,11 +13,14 @@ const rawFiles = import.meta.glob('/content/**/*.{md,html}', {
   import: 'default',
 }) as Record<string, string>;
 
-const assetUrls = import.meta.glob('/content/**/*', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>;
+const assetUrls = import.meta.glob(
+  ['/content/**/*', '!/content/**/*.md', '!/content/**/*.html'],
+  {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  },
+) as Record<string, string>;
 
 export type ContentKind = 'md' | 'html';
 
