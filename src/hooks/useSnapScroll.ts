@@ -92,21 +92,22 @@ export function useSnapScroll(
     };
 
     const onKey = (e: KeyboardEvent) => {
-      if (animating) return;
       let dir = 0;
       if (e.key === 'PageDown' || e.key === 'ArrowDown') dir = 1;
       else if (e.key === 'PageUp' || e.key === 'ArrowUp') dir = -1;
-      else if (e.key === 'Home') {
+      else if (e.key === 'Home' || e.key === 'End') {
+        // always swallow native paging — even mid-glide, where it would
+        // otherwise cancel the smooth scroll and strand the page
         e.preventDefault();
-        go(0);
-        return;
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        go(tops().length - 1);
+        if (!animating) go(e.key === 'Home' ? 0 : tops().length - 1);
         return;
       }
       if (dir === 0) return;
+      // Always preventDefault, including while a glide is in flight: key
+      // repeat otherwise drives native scrolling that cancels the smooth
+      // glide halfway (the wheel path already does this).
       e.preventDefault();
+      if (animating) return;
       go(nearest(tops()) + dir);
     };
 

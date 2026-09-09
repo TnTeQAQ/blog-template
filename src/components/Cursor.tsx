@@ -107,6 +107,7 @@ function HandIcon() {
  * - arrow tracks the pointer directly (zero lag, no spinning)
  * - squashes on press and springs back quickly on release
  * - turns into a small pointing hand over clickable elements
+ * - takes over the right button too (native context menu suppressed)
  * White silhouettes + `mix-blend-mode: difference` auto-invert on any surface.
  * Active only for fine pointers without reduced motion; otherwise native.
  */
@@ -121,6 +122,16 @@ export default function Cursor() {
     if (!active) return;
     document.documentElement.classList.add('has-custom-cursor');
     return () => document.documentElement.classList.remove('has-custom-cursor');
+  }, [active]);
+
+  // take over the right button too: suppress the native context menu while
+  // the custom cursor owns the pointer (press feedback already fires for any
+  // button via pointerdown below)
+  useEffect(() => {
+    if (!active) return;
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
+    window.addEventListener('contextmenu', onContextMenu);
+    return () => window.removeEventListener('contextmenu', onContextMenu);
   }, [active]);
 
   // click bounce: squash on press, quick spring back on release
