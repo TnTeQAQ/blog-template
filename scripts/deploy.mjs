@@ -21,6 +21,14 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const isWin = process.platform === 'win32';
+
+// `npm` is a .cmd shim on Windows, which execFileSync cannot spawn directly;
+// run it through the shell there. `git` ships a real binary and stays direct.
+const npm = (args = []) =>
+  isWin
+    ? execFileSync('cmd.exe', ['/c', 'npm', ...args], { encoding: 'utf8', stdio: 'inherit', cwd: root })
+    : execFileSync('npm', args, { encoding: 'utf8', stdio: 'inherit', cwd: root });
 
 // args[] form avoids shell quoting/encoding problems on Windows.
 const out = (cmd, args = [], opts = {}) =>
@@ -39,7 +47,7 @@ try {
 }
 
 // 2. Build the static site (type-check + vite build → dist/).
-run('npm', ['run', 'build'], { cwd: root });
+npm(['run', 'build']);
 
 const dist = join(root, 'dist');
 if (!existsSync(dist)) {
