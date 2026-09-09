@@ -18,7 +18,7 @@ A minimalist black-and-white personal blog template powered by **React 19 + Vite
 - **Three.js particle hero** with scroll-driven fly-through (respects the OS "reduce motion" setting)
 - **Black-and-white minimal design** with a unified interaction layer: custom cursor, magnetic / tilt / parallax / flip effects (anime.js)
 - **Dark mode** with no flash of unstyled content
-- **Clean-URL router** built on History state, with back/forward and scroll restoration
+- **Clean-URL router** on History state — deep links use real paths (`/archive`, `/posts/slug`, `/tags/tag`) that fold back to the root after open, with back/forward and scroll restoration
 - **Fully static** — `npm run build` emits a `dist/` folder deployable to any static host
 
 ## Quick Start
@@ -90,6 +90,28 @@ Brand strings live in `.env` (Vite env vars, baked into the bundle — **never p
 | `VITE_BASE` | Sub-path hosting, e.g. `/blog/`; `/` for root or custom domain | `/` |
 
 Use `.env.local` (gitignored) for local overrides. See `.env.example`.
+
+## Routing & deep links
+
+In-app navigation keeps the address bar at the root (page state lives in
+`history.state`), but every page is also reachable through a real path:
+
+| Page | Path |
+| --- | --- |
+| Home | `/` |
+| Archive | `/archive` |
+| About | `/about` |
+| Lab | `/lab` |
+| A post | `/posts/<slug>` |
+| A tag | `/tags/<tag>` |
+
+Opening such a link renders the page immediately, then folds the address bar
+back to the root, so shared links and refreshes work while the bar stays
+clean; browser Back returns to Home. Unknown paths show the branded 404 page.
+
+On static hosts the server must serve `index.html` for these paths (SPA
+fallback). The GitHub Pages workflow ships a copied `404.html` for this;
+Vercel / Netlify / Cloudflare Pages handle it automatically.
 
 ## Deployment
 

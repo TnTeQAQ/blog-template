@@ -1,18 +1,24 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PageRouterContext, type PageState, type NavigateOptions } from './context';
+import { pathToPageId } from './routes';
 
 const LS_KEY = 'blog:page';
 const STATE_KEY = 'blogPage';
+const HOME: PageState = { pageId: 'home', scrollY: 0 };
 
 /**
  * Single-root router with real history support but a clean URL.
  *
- * Every navigation calls history.pushState with the page state embedded in
- * the history entry's `state` object while keeping the URL identical, so the
- * address bar never changes. Browser back/forward (including mouse side
- * buttons) fire `popstate` and restore the corresponding page + scroll.
- * Refresh restores from history.state (persisted per entry), with
- * localStorage as a fallback. Link sharing still just shares the root URL.
+ * Pages are directly reachable through real paths — `/archive`,
+ * `/posts/<slug>`, `/tags/<tag>` — so shared links and refreshes work. On boot
+ * such a deep link is rendered, then the address bar is folded back to the
+ * site root while the page itself lives in the history entry's `state`:
+ * the entry that arrived with the path becomes "home", and a fresh root entry
+ * carrying the deep page sits on top, so the URL stays clean and Back still
+ * moves Home → (leave site). In-app navigation likewise pushes state with an
+ * identical root URL; Back/Forward (and mouse side buttons) fire `popstate`
+ * and restore the corresponding page + scroll. Refresh on a folded entry
+ * restores from history.state, with localStorage as a fallback.
  */
 type HistoryState = { [STATE_KEY]: PageState };
 
@@ -45,27 +51,35 @@ function readLocalState(): PageState | null {
   return null;
 }
 
-function boot(): PageState {
-  // deep link: ?target=<pageId> takes precedence over any stored state, then
-  // the param is stripped from the URL so the address bar stays clean
-  const params = new URLSearchParams(window.location.search);
-  const target = params.get('target');
-  if (target) {
-    params.delete('target');
-    const qs = params.toString();
-    const clean = window.location.pathname + (qs ? `?${qs}` : '');
-    history.replaceState(history.state, '', clean);
-    return { pageId: target, scrollY: 0 };
+/** Path relative to the deployment base, e.g. `/repo/posts/x` → `/posts/x`. */
+function currentAppPath(): string {
+  const base = import.meta.env.BASE_URL;
+  const { pathname } = window.location;
+  if (base !== '/') {
+    const prefix = base.replace(/\/+$/, '');
+    if (prefix && pathname.startsWith(prefix)) {
+      return pathname.slice(prefix.length) || '/';
+    }
   }
-  // clean up any stale hash left by the previous zero-width routing
-  if (window.location.hash) {
-    history.replaceState(
-      history.state,
-      '',
-      window.location.pathname + window.location.search,
-    );
+  return pathname;
+}
+
+/** Clean root URL: deployment base + optional preserved query, no hash. */
+function rootUrl(search: string = window.location.search): string {
+  return import.meta.env.BASE_URL + (search === '' ? '' : search);
+}
+
+type Boot = { page: PageState; deep: boolean };
+
+/** Pure boot resolution (no history writes — safe under StrictMode). */
+function resolveBoot(): Boot {
+  const path = currentAppPath();
+  if (path !== '/') {
+    // real path deep link: resolve the page; the effect folds the URL
+    return { page: { pageId: pathToPageId(path), scrollY: 0 }, deep: true };
   }
-  return readHistoryState() ?? readLocalState() ?? { pageId: 'home', scrollY: 0 };
+
+  return { page: readHistoryState() ?? readLocalState() ?? HOME, deep: false };
 }
 
 function restoreScroll(scrollY: number) {
@@ -75,7 +89,9 @@ function restoreScroll(scrollY: number) {
 }
 
 export function PageRouterProvider({ children }: { children: ReactNode }) {
-  const [page, setPage] = useState<PageState>(boot);
+  const [boot] = useState<Boot>(resolveBoot);
+  const [page, setPage] = useState<PageState>(boot.page);
+  const seeded = useRef(false);
 
   const navigate = useCallback((pageId: string, opts?: NavigateOptions) => {
     const scrollY = opts?.scrollTo ?? 0;
@@ -101,7 +117,7 @@ export function PageRouterProvider({ children }: { children: ReactNode }) {
       const entry = (event.state as HistoryState | null)?.[STATE_KEY];
       if (!entry || typeof entry.pageId !== 'string') {
         // foreign entry (e.g. arrived from another site) — fall back
-        setPage(readLocalState() ?? { pageId: 'home', scrollY: 0 });
+        setPage(readLocalState() ?? HOME);
         restoreScroll(0);
         return;
       }
@@ -112,19 +128,44 @@ export function PageRouterProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  // seed the current history entry with the boot state and restore scroll
+  // Seed history + restore scroll once. Deep links get folded here: the
+  // arriving entry (url=/posts/…) is rewritten to a clean root entry holding
+  // Home, then a second root entry holding the deep page is pushed on top —
+  // the address bar is clean, rendered page unchanged, Back lands on Home.
   useEffect(() => {
+    // StrictMode runs mount effects twice in dev; the history seeding must
+    // happen exactly once or deep links accumulate duplicate root entries
+    if (seeded.current) return;
+    seeded.current = true;
+
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-    const clean = window.location.pathname + window.location.search;
-    const current = readHistoryState();
-    if (!current || current.pageId !== page.pageId || current.scrollY !== page.scrollY) {
-      const entry: HistoryState = { [STATE_KEY]: page };
-      history.replaceState(entry, '', clean);
-    } else if (window.location.hash) {
-      history.replaceState(history.state, '', clean);
+
+    if (boot.deep) {
+      history.replaceState({ [STATE_KEY]: HOME }, '', rootUrl());
+      history.pushState({ [STATE_KEY]: boot.page }, '', rootUrl());
+    } else {
+      // strip a legacy ?target= param and any stale hash from old routing
+      const params = new URLSearchParams(window.location.search);
+      params.delete('target');
+      const query = params.toString();
+      const clean =
+        window.location.hash || window.location.search
+          ? rootUrl(query ? `?${query}` : '')
+          : window.location.pathname + window.location.search;
+      const current = readHistoryState();
+      if (
+        !current ||
+        current.pageId !== page.pageId ||
+        current.scrollY !== page.scrollY ||
+        window.location.search ||
+        window.location.hash
+      ) {
+        history.replaceState({ [STATE_KEY]: page }, '', clean);
+      }
     }
+
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(page));
     } catch {

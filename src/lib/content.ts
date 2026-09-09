@@ -124,6 +124,13 @@ export function getArchivePosts(): Post[] {
   return getPosts().filter((post) => !post.tags.includes(HIDDEN_TAG));
 }
 
+/** All distinct tags used across posts, sorted alphabetically. */
+export function getTags(): string[] {
+  return [...new Set(getPosts().flatMap((post) => post.tags))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
 /** Site-level content files (e.g. `/content/about.md`) by slug. */
 function getSiteContent(slug: string): Post | null {
   const file = Object.keys(rawFiles).find(

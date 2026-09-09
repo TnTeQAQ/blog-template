@@ -39,6 +39,9 @@ export function renderPage(pageId: string): ReactNode {
       );
     }
   }
+  if (pageId.startsWith('not-found:')) {
+    return <NotFoundView pageId={pageId.slice('not-found:'.length)} />;
+  }
   return <NotFoundView pageId={pageId} />;
 }
 
