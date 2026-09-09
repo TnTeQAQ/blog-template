@@ -3,7 +3,7 @@ import { resolveAsset, type Post } from '../lib/content';
 import { markdownToReact } from '../lib/markdown/render';
 import { formatDate } from '../lib/format';
 import TagPill from './TagPill';
-import Reveal from './Reveal';
+import Reveal from './effects/Reveal';
 import './article.css';
 import './ContentView.css';
 

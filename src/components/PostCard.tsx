@@ -3,7 +3,7 @@ import { usePageReveal } from './page-reveal-context';
 import { formatDate } from '../lib/format';
 import type { Post } from '../lib/content';
 import TagPill from './TagPill';
-import Reveal from './Reveal';
+import Reveal from './effects/Reveal';
 import Fx from './Fx';
 import './PostCard.css';
 

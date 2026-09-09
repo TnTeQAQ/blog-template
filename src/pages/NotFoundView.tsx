@@ -1,5 +1,5 @@
 import { type MouseEvent } from 'react';
-import Button from '../components/Button';
+import Button from '../components/elements/Button';
 import { isPlainClick, usePageReveal } from '../components/page-reveal-context';
 import './NotFoundView.css';
 

@@ -1,6 +1,6 @@
 import { type MouseEvent } from 'react';
 import { getPost, getPosts } from '../lib/content';
-import Button from '../components/Button';
+import Button from '../components/elements/Button';
 import ContentView from '../components/ContentView';
 import { isPlainClick, usePageReveal } from '../components/page-reveal-context';
 

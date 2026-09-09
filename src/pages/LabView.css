@@ -12,6 +12,12 @@
   margin-bottom: 8px;
 }
 
+.lab__lede {
+  color: var(--muted);
+  font-size: 15px;
+  max-width: 52ch;
+}
+
 .lab__section {
   margin-top: 44px;
 }
@@ -23,6 +29,12 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.lab__section-intro {
+  font-size: 13.5px;
+  color: var(--muted);
   margin-bottom: 16px;
 }
 
@@ -31,7 +43,12 @@
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  perspective: 800px;
+}
+
+.lab__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .lab__tile {
@@ -48,12 +65,93 @@
   text-transform: uppercase;
   font-size: 13px;
   color: var(--fg);
-  will-change: transform;
+  text-align: center;
 }
 
-.lab__tile--tilt {
-  transform-style: preserve-3d;
+.lab__tile--wide {
+  width: 200px;
 }
+
+/* cards -------------------------------------------------------------------- */
+
+.lab__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.lab__card-title {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 8px 0 6px;
+}
+
+.lab__card-text {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.lab__pad {
+  padding: 20px;
+}
+
+.lab__tile-card {
+  width: 140px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* lists -------------------------------------------------------------------- */
+
+.lab__lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+/* flip --------------------------------------------------------------------- */
+
+.lab__row--tiles {
+  align-items: stretch;
+}
+
+.lab__flip-face {
+  width: 160px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--sans);
+}
+
+.lab__flip-text {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.lab__flip-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* images ------------------------------------------------------------------- */
 
 .lab__images {
   display: flex;

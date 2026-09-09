@@ -1,6 +1,6 @@
 import { animate, spring, utils } from 'animejs';
 import { useRef, type ButtonHTMLAttributes, type MouseEvent } from 'react';
-import { useMagnetic } from '../lib/motion';
+import { useMagnetic } from '../../lib/motion';
 import './Button.css';
 
 type Variant = 'solid' | 'ghost' | 'outline';

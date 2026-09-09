@@ -8,9 +8,9 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useSnapScroll } from '../hooks/useSnapScroll';
 import ThreeHero from '../components/ThreeHero';
 import PostCard from '../components/PostCard';
-import Reveal from '../components/Reveal';
+import Reveal from '../components/effects/Reveal';
 import Fx from '../components/Fx';
-import FlipIn from '../components/FlipIn';
+import FlipIn from '../components/effects/FlipIn';
 import { siteConfig } from '../config';
 import './HomeView.css';
 

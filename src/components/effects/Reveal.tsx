@@ -1,7 +1,7 @@
 import { animate, utils } from 'animejs';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
-import { useInView } from '../lib/motion';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useInView } from '../../lib/motion';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export type RevealProps = {
   children: ReactNode;

@@ -4,7 +4,7 @@ import type { Post } from '../lib/content';
 import { useGoBack } from './page-reveal-context';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import PostCard from './PostCard';
-import Reveal from './Reveal';
+import Reveal from './effects/Reveal';
 import YearMarks, { type YearGroup } from './YearMarks';
 import './PostList.css';
 

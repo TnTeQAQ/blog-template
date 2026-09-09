@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { animate, spring, utils } from 'animejs';
-import { useInView } from '../lib/motion';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useInView } from '../../lib/motion';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export type FlipInProps = {
   children: ReactNode;
