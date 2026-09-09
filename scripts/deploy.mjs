@@ -16,7 +16,7 @@
  *   git remote add pages git@github.com:<user>/<user>.github.io.git
  */
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -70,6 +70,9 @@ run('git', ['init'], { cwd: deployDir });
 run('git', ['checkout', '-b', 'main'], { cwd: deployDir });
 run('git', ['remote', 'add', 'pages', pagesUrl], { cwd: deployDir });
 cpSync(dist, deployDir, { recursive: true });
+// Tell GitHub Pages to serve the files as-is and skip its Jekyll build
+// (which otherwise chokes on the hashed/unicode-named files in assets/).
+writeFileSync(join(deployDir, '.nojekyll'), '');
 
 const message =
   process.argv.slice(2).join(' ').trim() ||
