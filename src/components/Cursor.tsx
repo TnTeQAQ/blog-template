@@ -116,6 +116,7 @@ export default function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
   const active = isFinePointer && !reduced;
   const [hovering, setHovering] = useState(false);
+  const [over, setOver] = useState(false);
 
   // hide the native cursor only while the custom one is active
   useEffect(() => {
@@ -161,8 +162,10 @@ export default function Cursor() {
     const loop = () => {
       const p = getPointer();
       const now = performance.now();
-      // direct follow (no lag, no rotation)
+      // direct follow (no lag, no rotation); hide when the pointer leaves
+      // the window — the last position stays parked just outside/at the edge
       utils.set(el, { translateX: p.x, translateY: p.y });
+      if (p.over !== over) setOver(p.over);
 
       // hover detection (throttled): swap arrow <-> hand
       if (now - lastHoverCheck >= HOVER_CHECK_MS) {
@@ -170,21 +173,31 @@ export default function Cursor() {
         const stack = document
           .elementsFromPoint(p.x, p.y)
           .filter((n) => !n.closest('.cursor'));
-        const over = stack.some((n) => n.closest(INTERACTIVE));
-        if (over !== hovering) setHovering(over);
+        const overInteractive = stack.some((n) => n.closest(INTERACTIVE));
+        if (overInteractive !== hovering) setHovering(overInteractive);
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [active, hovering]);
+  }, [active, hovering, over]);
 
   if (!active) return null;
 
   return (
     // both icons stay mounted; the mode class crossfades them so switching
     // arrow <-> hand never jumps
-    <div ref={ref} className={`cursor${hovering ? ' is-hand' : ''}`} aria-hidden>
+    <div
+      ref={ref}
+      className={[
+        'cursor',
+        hovering ? 'is-hand' : '',
+        over ? '' : 'is-out',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-hidden
+    >
       <ArrowIcon />
       <HandIcon />
     </div>

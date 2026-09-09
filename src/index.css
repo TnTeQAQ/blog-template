@@ -117,6 +117,14 @@ img {
   pointer-events: none;
   z-index: 9999;
   will-change: transform;
+  /* fade out when the pointer leaves the viewport; the per-icon transition
+     below keeps the arrow/hand crossfade intact */
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+.cursor.is-out {
+  opacity: 0;
 }
 
 /* outlined glyphs: body in the theme ink color, outline in the theme

@@ -26,3 +26,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Editor atomic-write / backup leftovers (UUID-name with a numeric suffix)
+*.[0-9]*

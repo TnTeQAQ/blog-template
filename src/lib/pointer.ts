@@ -26,7 +26,8 @@ const snap: PointerSnapshot = {
   vx: 0,
   vy: 0,
   pressed: false,
-  over: true,
+  // start hidden — the icon only appears once a real pointer enters
+  over: false,
 };
 
 let lastX = 0;
@@ -69,20 +70,49 @@ export function getPointer(): PointerSnapshot {
   return snap;
 }
 
+/**
+ * True only for devices whose primary pointer is a precise, hovering one
+ * (mouse / trackpad). Touch-primary devices report `(pointer: coarse)` even
+ * though some also match `(pointer: fine)` for a secondary stylus, so the
+ * `hover: hover` + `pointer: fine` pair is what actually excludes phones.
+ */
 export const isFinePointer =
   typeof window !== 'undefined' &&
-  window.matchMedia('(pointer: fine)').matches;
+  window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+/** Touch-primary device (phone / tablet): no hovering cursor, coarse input. */
+export const isCoarsePointer =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
 if (typeof window !== 'undefined') {
   window.addEventListener('pointermove', track, { passive: true });
   window.addEventListener('pointerdown', track, { passive: true });
   window.addEventListener('pointerup', track, { passive: true });
-  window.addEventListener('pointerleave', () => {
-    snap.over = false;
-    emit();
+
+  // Track whether the mouse is inside the viewport. Pointer Events on
+  // `window` are unreliable for this across browsers (enter/leave don't fire
+  // while a button is held; some ports never fire them on window), so use
+  // mouse events on documentElement: mouseleave there == left the page, and
+  // relatedTarget null is the cross-browser equivalent.
+  const markOver = () => {
+    if (!snap.over) {
+      snap.over = true;
+      emit();
+    }
+  };
+  const markOut = () => {
+    if (snap.over) {
+      snap.over = false;
+      emit();
+    }
+  };
+  document.documentElement.addEventListener('mouseenter', markOver);
+  document.documentElement.addEventListener('mouseleave', markOut);
+  document.documentElement.addEventListener('mouseover', (e) => {
+    if (!e.relatedTarget) markOver();
   });
-  window.addEventListener('pointerenter', () => {
-    snap.over = true;
-    emit();
+  document.documentElement.addEventListener('mouseout', (e) => {
+    if (!e.relatedTarget) markOut();
   });
 }
