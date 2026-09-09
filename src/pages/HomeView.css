@@ -1,0 +1,147 @@
+.home {
+  width: min(var(--maxw), 100%);
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* bounds the sticky hero's pin range: the hero stays pinned while the extra
+   runway height (set inline from HERO_FLY_RUNWAY_VH) scrolls past, then
+   releases into normal flow */
+.home__pin {
+  position: relative;
+}
+
+/* pinned fly-through stage: the hero stays in view while the runway inside
+   `.home__pin` scrolls, letting the three.js camera travel through the cloud */
+.home__hero {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  z-index: 1; /* pinned hero paints above the sections scrolling underneath */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__hero {
+    position: relative;
+  }
+}
+
+.home__hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.home__title {
+  font-family: var(--sans);
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--fg);
+  will-change: transform;
+}
+
+/* inner layer owns the idle pointer parallax (outer h1 owns the drag) */
+.home__title-parallax {
+  display: inline-block;
+  will-change: transform;
+}
+
+.home__subtitle {
+  max-width: 480px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.home__section {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.home__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.home__section-head .home__section-title {
+  margin-bottom: 0;
+}
+
+.home__section-view {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.home__section-view:hover {
+  color: var(--fg);
+}
+
+.home__section-title {
+  font-family: var(--sans);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-bottom: 20px;
+}
+
+.home__posts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.home__empty {
+  color: var(--muted);
+}
+
+.home__about {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.home__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-left: 8px;
+  font-weight: 800;
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* scroll-triggered 3D flip entrance: outer div is the (untransformed) observer
+   sentinel, inner div carries the animation */
+.flip-in__inner {
+  will-change: transform;
+}
