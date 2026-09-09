@@ -42,12 +42,12 @@ A minimalist black-and-white personal blog template powered by **React 19 + Vite
 npm install                        # once
 npm run new -- "My first post"     # scaffolds the post + image folder
 # edit content/posts/My-first-post.md, drop images into its sibling folder
-npm run deploy                     # add/commit/pull/push — Actions publishes it
+npm run deploy                     # build locally + push the site to <user>.github.io
 ```
 
 - `npm run new -- "Title" --tags notes,web` adds tags; `--slug my-post` overrides the file name
 - `npm run deploy -- "fix css"` sets a custom commit message (a timestamped one is the default)
-- No local build needed: GitHub Actions builds and publishes in 1–2 minutes (Pages setup required once, see Deployment)
+- Posts and branding stay in this working copy only (gitignored) — `deploy` publishes just the built pages, so nothing personal is committed to the public template
 
 ## Writing Posts
 
@@ -110,29 +110,29 @@ back to the root, so shared links and refreshes work while the bar stays
 clean; browser Back returns to Home. Unknown paths show the branded 404 page.
 
 On static hosts the server must serve `index.html` for these paths (SPA
-fallback). The GitHub Pages workflow ships a copied `404.html` for this;
+fallback). `npm run deploy` copies `index.html` → `404.html` for GitHub Pages;
 Vercel / Netlify / Cloudflare Pages handle it automatically.
 
 ## Deployment
 
-### GitHub Pages (recommended, free)
+### GitHub Pages via `<user>.github.io` (recommended, free)
 
-The repo ships with `.github/workflows/deploy.yml` (dormant in the template repo itself):
+Push the built site straight to your user-pages repo — no Actions, no CI:
 
-1. Push to GitHub;
-2. **Settings → Secrets and variables → Actions → Variables**, add:
-   - `ENABLE_PAGES` = `true`
-   - (only when serving from `https://USER.github.io/REPO/`) also set `VITE_BASE` = `/REPO/`;
-3. **Settings → Pages → Build and deployment → Source** → **GitHub Actions**;
-4. Every push to `main` now deploys. You can also trigger it manually from the Actions tab.
+1. Add the deploy remote once:
 
-> Two kinds of GitHub Pages URLs:
-> - If the repo is named exactly `<user>.github.io`, or you use a custom domain → the site is served from the root, keep `VITE_BASE` as `/`;
-> - Any other repo name → the site is served from the `/repo-name/` sub-path; you **must** set `VITE_BASE` or assets will 404.
+   ```bash
+   git remote add pages git@github.com:<user>/<user>.github.io.git
+   ```
+
+2. **Settings → Pages → Build and deployment → Source** → **Deploy from a branch** → branch `main`, folder `/ (root)`;
+3. Publish any time with `npm run deploy` — it builds `dist/` and force-pushes it to `pages`'s `main`.
+
+> Custom domain: after the first deploy, add your domain under Settings → Pages; GitHub reads the `CNAME` the build already emitted into `dist/`.
 
 ### Custom domain (GitHub Pages)
 
-1. Put your domain in `public/CNAME` and push;
+1. Put your domain in `public/CNAME` (local only — the build copies it into `dist/`, and `npm run deploy` ships it);
 2. Point DNS at GitHub Pages: root `A` records to `185.199.108.153` / `.109.` / `.110.` / `.111.153`, and a `www` `CNAME` to `<user>.github.io`;
 3. Add the domain under Settings → Pages and enable **Enforce HTTPS** once the certificate is ready.
 
@@ -169,7 +169,7 @@ git merge template/main --allow-unrelated-histories
 │   ├── pages/                # Home / Archive / Lab / Post views
 │   ├── router/               # single-root History router
 │   └── config.ts             # reads VITE_SITE_* config
-├── .github/workflows/        # ci.yml and deploy.yml
+├── .github/workflows/        # ci.yml (lint + type-check + build)
 ├── scripts/                  # new-post.mjs (scaffold) and deploy.mjs (one-push deploy)
 └── .env                      # site configuration
 ```
@@ -182,7 +182,7 @@ npm run build    # type-check + production build to dist/
 npm run preview  # preview the build
 npm run lint     # ESLint
 npm run new      # scaffold a post (npm run new -- "Title")
-npm run deploy   # commit and push in one command
+npm run deploy   # build + push dist/ to the `pages` remote
 ```
 
 ## License

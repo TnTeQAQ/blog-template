@@ -29,3 +29,19 @@ dist-ssr
 
 # Editor atomic-write / backup leftovers (UUID-name with a numeric suffix)
 *.[0-9]*
+
+# --- personal blog content & workers (kept local, never pushed to the template) ---
+# Your posts live only in this working copy and are published by `npm run
+# deploy`. Only the demo post is shared with the public template.
+content/posts/*
+!content/posts/hello-world.md
+!content/posts/hello-world/
+!content/posts/hello-world/**
+
+# Personal domain + local planning notes.
+CNAME
+public/CNAME
+PLAN.md
+
+# Deploy scratch directory (rewritten by scripts/deploy.mjs).
+.deploy

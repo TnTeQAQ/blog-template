@@ -42,12 +42,12 @@
 npm install                       # 首次：安装依赖
 npm run new -- "我的第一篇文章"     # 自动新建文章和同名图片文件夹
 # 编辑 content/posts/我的第一篇文章.md，图片放进同名文件夹
-npm run deploy                    # 一键 add/commit/pull/push，Actions 自动发布
+npm run deploy                    # 本地构建 + 推送站点到 <用户名>.github.io
 ```
 
 - `npm run new -- "标题" --tags 随笔,前端`：新建时带标签；`--slug xxx` 指定英文文件名
 - `npm run deploy -- "修复样式"`：自定义提交说明；不带参数则自动用时间生成
-- 前提：仓库已配置好 GitHub Actions Pages（见下文部署章节）。本地不需要构建，1~2 分钟后线上更新
+- 文章和品牌配置只保留在本工作区（已 gitignore），`deploy` 仅发布构建产物，不会把个人内容提交进公开模板
 
 ## 写文章
 
@@ -106,28 +106,28 @@ cover: ./我的第一篇/cover.png   # 可选，封面图
 
 打开这类链接会立刻渲染对应页面，随后地址栏自动折叠回根路径——既能分享链接、刷新可用，地址栏又保持简洁；按浏览器后退会回到首页。未知路径会显示自定义 404 页。
 
-静态托管需要服务器对这些路径回退输出 `index.html`（SPA fallback）。GitHub Pages 工作流已通过复制一份 `404.html` 实现；Vercel / Netlify / Cloudflare Pages 则自动处理。
+静态托管需要服务器对这些路径回退输出 `index.html`（SPA fallback）。`npm run deploy` 会把 `index.html` 复制为 `404.html` 以适应 GitHub Pages；Vercel / Netlify / Cloudflare Pages 则自动处理。
 
 ## 部署
 
-### GitHub Pages（推荐，免费）
+### GitHub Pages 部署到 `<用户名>.github.io`（推荐，免费）
 
-仓库已内置 `.github/workflows/deploy.yml`（模板仓库中默认休眠，不会误部署）。
+直接把构建好的站点推送到用户页仓库，不依赖 Actions / CI：
 
-1. 推送代码到 GitHub；
-2. 仓库 **Settings → Secrets and variables → Actions → Variables** 新建变量：
-   - `ENABLE_PAGES` = `true`
-   - （仅当部署地址是 `https://用户名.github.io/仓库名/` 这种**子路径**时）再加 `VITE_BASE` = `/你的仓库名/`；
-3. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**；
-4. 之后每次 push 到 `main` 自动构建发布，也可在 Actions 页手动触发。
+1. 一次性添加部署远程：
 
-> 两种 GitHub Pages 地址：
-> - 仓库名恰好为 `<用户名>.github.io`，或绑定了自定义域名 → 站点在根路径，`VITE_BASE` 保持 `/`；
-> - 其他仓库名 → 站点在 `/仓库名/` 子路径，**必须**设置 `VITE_BASE`，否则静态资源 404。
+   ```bash
+   git remote add pages git@github.com:<用户名>/<用户名>.github.io.git
+   ```
+
+2. 仓库 **Settings → Pages → Build and deployment → Source** 选择 **Deploy from a branch**，分支 `main`、目录 `/ (root)`；
+3. 之后随时 `npm run deploy`，它会构建 `dist/` 并强制推送到 `pages` 的 `main` 分支。
+
+> 自定义域名：首次部署后到 Settings → Pages 填入域名即可，GitHub 会读取构建产物里已生成的 `CNAME`。
 
 ### 绑定自定义域名（GitHub Pages）
 
-1. 在仓库 `public/CNAME` 文件中写入你的域名（如 `example.com`），推送；
+1. 在 `public/CNAME` 文件中写入你的域名（如 `example.com`），仅保留本地——构建会把它复制进 `dist/`，由 `npm run deploy` 一并推送；
 2. DNS 处添加记录到 GitHub Pages：
    - 根域 `A` 记录指向 `185.199.108.153`、`185.199.109.153`、`185.199.110.153`、`185.199.111.153`；
    - `www` 添加 `CNAME` 指向 `<用户名>.github.io`；
@@ -168,7 +168,7 @@ git merge template/main --allow-unrelated-histories
 │   ├── pages/                # Home / Archive / Lab / Post 视图
 │   ├── router/               # 单根 History 路由
 │   └── config.ts             # 读取 VITE_SITE_* 配置
-├── .github/workflows/        # ci.yml 与 deploy.yml
+├── .github/workflows/        # ci.yml（lint + 类型检查 + 构建）
 ├── scripts/                  # new-post.mjs (新建文章) 与 deploy.mjs (一键发布)
 └── .env                      # 站点配置
 ```
@@ -181,7 +181,7 @@ npm run build    # 类型检查 + 生产构建到 dist/
 npm run preview  # 预览构建产物
 npm run lint     # ESLint
 npm run new      # 新建文章脚手架（npm run new -- "标题"）
-npm run deploy   # 一键提交并推送到 GitHub
+npm run deploy   # 构建并推送 dist/ 到 pages 远程
 ```
 
 ## License

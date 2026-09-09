@@ -5,70 +5,72 @@
  *   npm run deploy
  *   npm run deploy -- "修复首页样式"     # custom commit message
  *
- * Stages every change, commits, syncs with the remote (rebase), and pushes.
- * GitHub Actions then builds and publishes the site automatically — no
- * local build or server needed.
+ * Builds the static site locally (`npm run build` → `dist/`) and force-pushes
+ * the built pages to the deployment remote's `main` branch — your
+ * `<user>.github.io` repo. The working copy keeps the source code and your
+ * posts; only the generated pages leave this repo, so nothing personal is
+ * committed to the published site's git history beyond the rendered output.
+ *
+ * Requires a git remote named `pages` pointing at the publish repository:
+ *
+ *   git remote add pages git@github.com:<user>/<user>.github.io.git
  */
 import { execFileSync } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // args[] form avoids shell quoting/encoding problems on Windows.
-const out = (cmd, args = []) =>
-  execFileSync(cmd, args, { encoding: 'utf8' }).trim();
+const out = (cmd, args = [], opts = {}) =>
+  execFileSync(cmd, args, { encoding: 'utf8', ...opts }).trim();
+const run = (cmd, args = [], opts = {}) =>
+  execFileSync(cmd, args, { encoding: 'utf8', stdio: 'inherit', ...opts });
 
-const run = (cmd, args = []) =>
-  execFileSync(cmd, args, { encoding: 'utf8', stdio: 'inherit' });
-
-const branch = out('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-
-// 1. Remotes — abort with a hint on a fresh clone that has no origin yet.
-let origin = '';
+// 1. Deployment remote — abort with a hint when missing.
+let pagesUrl = '';
 try {
-  origin = out('git', ['remote', 'get-url', 'origin']);
+  pagesUrl = out('git', ['remote', 'get-url', 'pages']);
 } catch {
-  console.error('✗ 还没有配置远程仓库 / No git remote "origin".');
-  console.error('  git remote add origin https://github.com/<you>/<repo>.git');
+  console.error('✗ 还没有配置部署远程 "pages"（你的 <user>.github.io 仓库）。');
+  console.error('  git remote add pages git@github.com:<user>/<user>.github.io.git');
   process.exit(1);
 }
 
-// 2. Stage and commit (skip silently when the tree is clean).
-run('git', ['add', '-A']);
-const staged = out('git', ['diff', '--cached', '--name-only']);
-if (staged) {
-  const message = process.argv.slice(2).join(' ').trim()
-    || `post: update ${new Date().toLocaleString()}`;
-  run('git', ['commit', '-m', message]);
-} else {
-  console.log('· 没有本地改动 / Nothing to commit.');
-}
+// 2. Build the static site (type-check + vite build → dist/).
+run('npm', ['run', 'build'], { cwd: root });
 
-// 3. Sync with remote. On the very first push there is no upstream yet —
-//    set it automatically.
-const hasUpstream = (() => {
-  try {
-    out('git', ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
-    return true;
-  } catch {
-    return false;
-  }
-})();
-
-if (hasUpstream) {
-  run('git', ['pull', '--rebase']);
-}
-
-// 4. Push (set upstream on first push).
-try {
-  if (hasUpstream) {
-    run('git', ['push']);
-  } else {
-    run('git', ['push', '-u', 'origin', branch]);
-  }
-} catch {
-  console.error('');
-  console.error('✗ 推送失败 / Push failed. 检查网络与 GitHub 登录凭据，或先手动处理上面的提示。');
+const dist = join(root, 'dist');
+if (!existsSync(dist)) {
+  console.error('✗ 构建失败：dist/ 不存在。');
   process.exit(1);
 }
+
+// SPA fallback: deep links (/archive, /posts/<slug>, …) are real paths, so
+// GitHub Pages (no rewrite rules) needs `index.html` served as `404.html` to
+// bootstrap the router on unknown paths.
+cpSync(join(dist, 'index.html'), join(dist, '404.html'));
+
+// 3. Assemble a fresh deploy repo from dist/ and force-push it to `pages`.
+//    .deploy is rewritten each time so the published branch always mirrors
+//    exactly the current build, with no stale files or leaked history.
+const deployDir = join(root, '.deploy');
+rmSync(deployDir, { recursive: true, force: true });
+mkdirSync(deployDir, { recursive: true });
+run('git', ['init'], { cwd: deployDir });
+run('git', ['checkout', '-b', 'main'], { cwd: deployDir });
+run('git', ['remote', 'add', 'pages', pagesUrl], { cwd: deployDir });
+cpSync(dist, deployDir, { recursive: true });
+
+const message =
+  process.argv.slice(2).join(' ').trim() ||
+  `deploy ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
+
+run('git', ['add', '-A'], { cwd: deployDir });
+run('git', ['commit', '-m', message], { cwd: deployDir });
+run('git', ['push', '--force', 'pages', 'main'], { cwd: deployDir });
 
 console.log('');
-console.log('✓ 已推送 / Pushed — GitHub Actions 正在构建发布，1~2 分钟后刷新站点即可。');
-console.log(`  ${origin.replace(/\.git$/, '')}/actions`);
+console.log('✓ 已部署 / Deployed — 静态页面已推送到 <user>.github.io，稍后刷新即可。');
+console.log(`  ${pagesUrl.replace(/\.git$/, '')}`);
